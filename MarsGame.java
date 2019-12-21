@@ -48,11 +48,119 @@ public class MarsGame{
     awardCost = new int[]{8,14,20};
     deck = new MarsDeck(true);
     drawPile = new ConcurrentLinkedQueue<MarsCard>();
+    MarsDeck.initial(deck,drawPile);
     discardPile = new Vector<MarsCard>();
   }
 
   private void shuffle(){
+    Random random = new Random();
+    int size = discardPile.size();
+    for (int i = 0; i < size; i ++){
+      int j = random.nextInt(size - i);
+      MarsCard card = discardPile.get(j);
+      discardPile.remove(card);
+      drawPile.offer(card);
+    }
+  }
 
+  private void playGeneration(){
+    //Generation 1 starts from id = 0 player
+    int id = (generation - 1) % numPlayers;
+    playTurn(id);
+    while (findNextPlayer(id) != null){
+      id = findNextPlayer(id);
+      playTurn(id);
+    }
+  }
+
+  private int findNextPlayer(int currentId){
+    int i = 1;
+    while (players.get((currentId + i) % numPlayers).hardPass == true && i % numPlayers != 0){
+      i ++;
+    }
+    if (i == numPlayers){
+      if (players.get(currentId).hardPass){
+        return null;
+      }else{
+        return currentId;
+      }
+    }else{
+      return (currentId + i) % numPlayers;
+    }
+  }
+
+  private void singleAction(int id, Scanner sc){
+    System.out.println("Now is " + id + " turn!");
+    System.out.println("What would you like to do?");
+    String action = sc.nextLine().trim();
+    switch (action) {
+      case "Standard project":
+        System.out.println("Which standard project are you doing?");
+        String mlstn = sc.nextLine().trim();
+        standardProjects(mlstn,id);
+        break;
+      case "Play card":
+        System.out.println("Which card do you want to play?");
+        String mlstn = sc.nextLine().trim();
+        playCard(mlstn,id);
+        break;
+      case "Fund award":
+        System.out.println("Which award do you want to fund?");
+        String mlstn = sc.nextLine().trim();
+        fundAward(mlstn,id);
+        break;
+      case "Claim milestone":
+        System.out.println("Which milestone do you want to claim?");
+        String mlstn = sc.nextLine().trim();
+        claimMilestone(mlstn,id);
+        break;
+      case "Raise temperature":
+        //Lol
+        break;
+      case "Plant greenery":
+        //lol
+        break;
+      case "Hard Pass":
+        hdPass(id);
+        break;
+      default:
+        System.out.println("Invalid action.");
+  }
+
+  private void playTurn(int id){
+    //Do any two actions
+    Scanner scanner = new Scanner(System.in);
+    singleAction(id, scanner);
+    System.out.println("Second action?");
+    singleAction(id, scanner);
+  }
+
+  private void endGame(){
+
+  }
+
+  private void draft(){
+
+  }
+
+  private void hdPass(int id){
+    MarsPlayer plyr = players.get(id);
+    plyr.hardPass = true;
+    plyr.actionsTaken = 2;
+  }
+
+  private void endGeneration(){
+    if (temperature == maxTemp && oxygen == maxOxygen && oceans == maxOcean){
+      endGame();
+    }else{
+      generation ++;
+      for (MarsPlayer plyr : players){
+        plyr.produce();
+      }
+      if (discardPile.size() > 35) shuffle();
+      draft();
+      playGeneration();
+    }
   }
 
   private void tempIncrease(MarsPlayer plyr){
@@ -178,14 +286,14 @@ public class MarsGame{
       System.out.println("Action limit met.");
       return false;
     }
-    if (deck.searchCard(cardName) != null){
+    if (deck.searchCard(cardName) != null && plyr.hand.contains(cardName)){
       MarsCard card = deck.searchCard(cardName);
       //Check for money reduction
       int reduction = 0;
       int cost = card.cost - reduction;
-      plyr.moneyChange(-cost);
+      plyr.moneyChange(-cost).takeAction();
       effect!;
-      plyr.takeAction();
+      discardPile.add(card);
     }else{
       return false;
     }
