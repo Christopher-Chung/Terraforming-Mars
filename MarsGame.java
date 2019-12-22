@@ -115,13 +115,38 @@ public class MarsGame{
         claimMilestone(mlstn,id);
         break;
       case "Raise temperature":
-        //Lol
+        MarsPlayer plyr = players.get(id);
+        if (plyr.heat >= 8){
+          plyr.heat -= 8;
+          putGreenery(); ///
+        }else{
+          System.out.println("Not enough heat.");
+        }
         break;
       case "Plant greenery":
-        //lol
+        MarsPlayer plyr = players.get(id);
+        boolean check = (plyr.corp == "Ecoline")? true : false;
+        if (check){
+          if (plyr.plant >= 7){
+            plyr.plant -= 7;
+            putGreenery();
+          }else{
+            System.out.println("Not enough plants.");
+          }
+        }else{
+          if (plyr.plant >= 8){
+            plyr.plant -= 8;
+            putGreenery();
+          }else{
+            System.out.println("Not enough plants.");
+          }
+        }
         break;
       case "Hard Pass":
         hdPass(id);
+        break;
+      case "Activate":
+        //Do stuff
         break;
       default:
         System.out.println("Invalid action.");
@@ -131,8 +156,15 @@ public class MarsGame{
     //Do any two actions
     Scanner scanner = new Scanner(System.in);
     singleAction(id, scanner);
-    System.out.println("Second action?");
-    singleAction(id, scanner);
+    String response = "";
+    if (players.get(id).hardPass) return;
+    while (!response.equals("y") || !response.equals("n")){
+      System.out.println("Second action? (y/n)");
+      response = scanner.nextLine().trim();
+    }
+    if (response.equals(y)){
+      singleAction(id, scanner);
+    }
   }
 
   private void endGame(){
@@ -143,10 +175,13 @@ public class MarsGame{
 
   }
 
+  private MarsCard drawCard(){
+    return drawPile.poll();
+  }
+
   private void hdPass(int id){
     MarsPlayer plyr = players.get(id);
     plyr.hardPass = true;
-    plyr.actionsTaken = 2;
   }
 
   private void endGeneration(){
@@ -177,7 +212,11 @@ public class MarsGame{
     }
   }
 
-  private void putOnBoard(MarsPlayer plyr, String item){
+  private void putGreenery(int id, int location){
+
+  }
+
+  private void putOnBoard(int id, String item){
     int location = -1;
     while (location < 0 || board[location][0] != 0){
       System.out.println("Choose location: ");
@@ -217,17 +256,15 @@ public class MarsGame{
   //Not complete!
   public boolean standardProjects(String action, int id){
     MarsPlayer plyr = players.get(id);
-    if (plyr.actionsTaken >= 2){
-      System.out.println("Action limit met.");
-      return false;
-    }
     int reduction = 0; //Standard projects card?
     switch (action){
+      case "Sell Patents":
+        //Do stuff;
+        return true;
       case "Power Plant":
         if (plyr.money >= 11 - reduction){
           plyr.moneyChange(-11 + reduction);
           plyr.energyProduction ++;
-          plyr.takeAction();
           return true;
         }else{
           System.out.println("Not enough money!");
@@ -237,7 +274,6 @@ public class MarsGame{
         if (plyr.money >= 14 - reduction){
           plyr.moneyChange(-14 + reduction);
           tempIncrease(plyr);
-          plyr.takeAction();
           return true;
         }else{
           System.out.println("Not enough money!");
@@ -247,7 +283,6 @@ public class MarsGame{
         if (plyr.money >= 14 - reduction){
           plyr.moneyChange(-14 + reduction);
           tempIncrease(plyr);
-          plyr.takeAction();
           return true;
         }else{
           System.out.println("Not enough money!");
@@ -256,8 +291,7 @@ public class MarsGame{
       case "Greenery":
         if (plyr.money >= 23 - reduction){
           plyr.moneyChange(-23 + reduction);
-          putOnBoard(plyr, "Greenery");
-          plyr.takeAction();
+          putGreenery(id); !!!!!!!!!
           return true;
         }else{
           System.out.println("Not enough money!");
@@ -268,7 +302,6 @@ public class MarsGame{
           plyr.moneyChange(-25 + reduction);
           putCity(plyr);
           plyr.moneyProduction ++;
-          plyr.takeAction();
           return true;
         }else{
           System.out.println("Not enough money!");
@@ -282,16 +315,12 @@ public class MarsGame{
 
   public boolean playCard(String cardName, int id){
     MarsPlayer plyr = players.get(id);
-    if (plyr.actionsTaken >= 2){
-      System.out.println("Action limit met.");
-      return false;
-    }
     if (deck.searchCard(cardName) != null && plyr.hand.contains(cardName)){
       MarsCard card = deck.searchCard(cardName);
       //Check for money reduction
       int reduction = 0;
       int cost = card.cost - reduction;
-      plyr.moneyChange(-cost).takeAction();
+      plyr.moneyChange(-cost);
       effect!;
       discardPile.add(card);
     }else{
@@ -302,10 +331,6 @@ public class MarsGame{
   //Status: Complete
   public boolean fundAward(String awardName, int id){
     MarsPlayer plyr = player.get(id);
-    if (plyr.actionsTaken >= 2){
-      System.out.println("Action limit met.");
-      return false;
-    }
     if (numAward >= 3){
       System.out.println("No more awards.");
       return false;
@@ -319,7 +344,7 @@ public class MarsGame{
       return false;
     }
     if (plyr.money >= awardCost[numAward]){
-      plyr.moneyChange(-awardCost[numAward]).takeAction();
+      plyr.moneyChange(-awardCost[numAward]);
       awards.replace(awardName,true);
       numAward ++;
       return true;
@@ -332,10 +357,6 @@ public class MarsGame{
   //Status: Complete
   public boolean claimMilestone(String name, int id){
     MarsPlayer plyr = player.get(id);
-    if (plyr.actionsTaken >= 2){
-      System.out.println("Action limit met.");
-      return false;
-    }
     if (numMilestone >= 3){
       System.out.println("No more milestones.");
       return false;
@@ -376,7 +397,7 @@ public class MarsGame{
             return false;
           }
       }
-      plyr.moneyChange(-8).takeAction();
+      plyr.moneyChange(-8);
       milestones.replace(name,id);
       plyr.vp += 5;
       numMilestone ++;
