@@ -71,6 +71,7 @@ public class MarsGame{
       id = findNextPlayer(id);
       playTurn(id);
     }
+    endGeneration();
   }
 
   private int findNextPlayer(int currentId){
@@ -168,7 +169,70 @@ public class MarsGame{
   }
 
   private void endGame(){
+    //milestone already counted for
+    for (MarsPlayer plyr : players){
+      plyr.produce();
+    }
+    //Put greeneries
 
+    //awards
+    if (awards.get("Miner")){
+      int[] m = new int[numPlayers];
+      for (int i = 0; i < numPlayers; i ++){
+        m[i] = players.get(i).titanium + players.get(i).steel;
+      }
+      countAward(m);
+    }
+    if (awards.get("Thermalist")){
+      int[] t = new int[numPlayers];
+      for (int i = 0; i < numPlayers; i ++){
+        t[i] = players.get(i).heat;
+      }
+      countAward(t);
+    }
+    if (awards.get("Banker")){
+      int[] b = new int[numPlayers];
+      for (int i = 0; i < numPlayers; i ++){
+        b[i] = players.get(i).moneyProduction;
+      }
+      countAward(b);
+    }
+    if (awards.get("Scientist")){
+      int[] s = new int[numPlayers];
+      for (int i = 0; i < numPlayers; i ++){
+        s[i] = players.get(i).scienceTags;
+      }
+      countAward(s);
+    }
+    if (awards.get("Landlord")){
+
+    }
+  }
+
+  //Status: completed
+  private void countAward(int[] score){
+    int max = -1;
+    int occur = 0;
+    for (int i = 0; i < score.length; i ++){
+      if (score[i] > max){
+        max = score[i];
+        occur = 1;
+      }else if (score[i] == max){
+        occur ++;
+      }
+    }
+    for (int i = 0; i < score.length; i ++){
+      if (score[i] == max) players.get(i).vp += 5;
+    }
+    if (occur == 1){
+      int secondMax = -1;
+      for (int i = 0; i < score.length; i ++){
+        if (score[i] > secondMax && score[i] < max) secondMax = score[i];
+      }
+      for (int i = 0; i < score.length; i ++){
+        if (score[i] == secondMax) players.get(i).vp += 2;
+      }
+    }
   }
 
   private void draft(){
