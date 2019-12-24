@@ -4,8 +4,8 @@ public class MarsPlayer{
 
   protected int id;
   int vp;
-  protected String corp;
-  protected int actionsTaken;
+  String corp;
+  boolean hardPass;
   protected int money;
   protected int steel;
   protected int titanium;
@@ -30,22 +30,22 @@ public class MarsPlayer{
   protected Vector<Integer> cities;
   protected Vector<Integer> greens;
   Vector<MarsCard> hand;
-  protected Vector<MarsCard> playedCards;
+  Vector<MarsCard> playedEvents;
+  Vector<MarsCard> playedPermanents;
+  Vector<MarsCard> playedProjects;
 
   public MarsPlayer(int sequence, String corperation){
     id = sequence;
     corp = corperation;
-
-
   }
 
-  public void newTurn(){
-    actionsTaken = 0;
-  }
-
-
-  public boolean buildPlant(int position){
-
+  private void generationProduce(){
+    money += (rating + moneyProduction);
+    heat += (energy + heatProduction);
+    energy = energyProduction;
+    plant += plantProduction;
+    steel += steelProduction;
+    titanium += titaniumProduction;
   }
 
   private MarsPlayer moneyChange(int change){
@@ -55,10 +55,6 @@ public class MarsPlayer{
 
   private void ratingIncrement(){
     rating ++;
-  }
-
-  private void takeAction(){
-    actionsTaken ++;
   }
 
 }
