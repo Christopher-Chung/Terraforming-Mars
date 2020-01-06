@@ -25,20 +25,20 @@ public class MarsGame{
 
   public MarsGame(int playerNumber){
     numPlayers = playerNumber;
-    board = new int[!!][2];
+    board = new int[100][2]; //NUMBER OF SPACES!! FIX
     temperature = -24;
     generation = 1;
     oxygen = 0;
-    ocean = 0;
+    oceans = 0;
     numAward = 0;
     numMilestone = 0;
-    milestones = new HashMap<String,Integer>;
+    milestones = new HashMap<String,Integer>();
     milestones.put("Terraformer",0);
     milestones.put("Builder",0);
     milestones.put("Mayor",0);
     milestones.put("Gardner",0);
     milestones.put("Planner",0);
-    awards = new HashMap<String,boolean>;
+    awards = new HashMap<String,boolean>();
     awards.put("Landlord",false);
     awards.put("Banker",false);
     awards.put("Scientist",false);
@@ -67,7 +67,7 @@ public class MarsGame{
     //Generation 1 starts from id = 0 player
     int id = (generation - 1) % numPlayers;
     playTurn(id);
-    while (findNextPlayer(id) != null){
+    while (findNextPlayer(id) != -1){
       id = findNextPlayer(id);
       playTurn(id);
     }
@@ -81,7 +81,7 @@ public class MarsGame{
     }
     if (i == numPlayers){
       if (players.get(currentId).hardPass){
-        return null;
+        return -1;
       }else{
         return currentId;
       }
@@ -91,24 +91,25 @@ public class MarsGame{
   }
 
   private void singleAction(int id, Scanner sc){
+    MarsPlayer plyr = players.get(id);
     System.out.println("Now is " + id + " turn!");
     System.out.println("What would you like to do?");
     String action = sc.nextLine().trim();
     switch (action) {
       case "Standard project":
         System.out.println("Which standard project are you doing?");
-        String mlstn = sc.nextLine().trim();
-        standardProjects(mlstn,id);
+        String prj = sc.nextLine().trim();
+        standardProjects(prj,id);
         break;
       case "Play card":
         System.out.println("Which card do you want to play?");
-        String mlstn = sc.nextLine().trim();
-        playCard(mlstn,id);
+        String cd = sc.nextLine().trim();
+        playCard(cd,id);
         break;
       case "Fund award":
         System.out.println("Which award do you want to fund?");
-        String mlstn = sc.nextLine().trim();
-        fundAward(mlstn,id);
+        String awd = sc.nextLine().trim();
+        fundAward(awd,id);
         break;
       case "Claim milestone":
         System.out.println("Which milestone do you want to claim?");
@@ -116,7 +117,6 @@ public class MarsGame{
         claimMilestone(mlstn,id);
         break;
       case "Raise temperature":
-        MarsPlayer plyr = players.get(id);
         if (plyr.heat >= 8){
           plyr.heat -= 8;
           putGreenery(); ///
@@ -125,7 +125,6 @@ public class MarsGame{
         }
         break;
       case "Plant greenery":
-        MarsPlayer plyr = players.get(id);
         boolean check = (plyr.corp == "Ecoline")? true : false;
         if (check){
           if (plyr.plant >= 7){
@@ -151,6 +150,7 @@ public class MarsGame{
         break;
       default:
         System.out.println("Invalid action.");
+    }
   }
 
   private void playTurn(int id){
@@ -163,7 +163,7 @@ public class MarsGame{
       System.out.println("Second action? (y/n)");
       response = scanner.nextLine().trim();
     }
-    if (response.equals(y)){
+    if (response.equals("y")){
       singleAction(id, scanner);
     }
   }
@@ -171,8 +171,9 @@ public class MarsGame{
   private void endGame(){
     //milestone already counted for
     for (MarsPlayer plyr : players){
-      plyr.produce();
+      plyr.generationProduce();
     }
+    int id = generation % numPlayers;
     //Put greeneries
 
     //awards
@@ -182,7 +183,7 @@ public class MarsGame{
     for (MarsPlayer plyr : players){
       for (MarsCard card: plyr.playedEvents){
         if (card.constantVp == false){
-          countPoints
+          //Countpoints
         }
       }
     }
@@ -253,7 +254,19 @@ public class MarsGame{
   }
 
   private void draft(){
+    for (int i = 0; i < 4; i ++){
+      for (MarsPlayer plyr : players){
+        plyr.tempDraftHand.add(drawPile.poll());
+      }
+    }
+    Scanner scanner = new Scanner(System.in);
+    for (int i = 0; i < 4; i ++){
+      for (MarsPlayer plyr : players){
+        System.out.println("What card do you want to draft?");
+        String card = scanner.nextLine().trim();
 
+      }
+    }
   }
 
   private MarsCard drawCard(){
@@ -271,7 +284,7 @@ public class MarsGame{
     }else{
       generation ++;
       for (MarsPlayer plyr : players){
-        plyr.produce();
+        plyr.generationProduce();
       }
       if (discardPile.size() > 35) shuffle();
       draft();
@@ -297,18 +310,22 @@ public class MarsGame{
 
   }
 
+  private void putCity(MarsPlayer plyr){
+
+  }
+
   private void putOnBoard(int id, String item){
     int location = -1;
     while (location < 0 || board[location][0] != 0){
       System.out.println("Choose location: ");
       location = Scanner.nextInt();
     }
-    board[location] = 2;
+    board[location][1] = id;
   }
 
   //Takes a legal card and check global requirements.
   private boolean checkReqs(String cardName){
-    MarsCard card = deck.get(cardName);
+    MarsCard card = deck.deck.get(cardName);
     switch (card.cardReqs){
       case 0:
         return true;
@@ -330,7 +347,7 @@ public class MarsGame{
         }else{
           return oceans <= -card.oceanReqs;
         }
-      case 4,5!!!
+      //More cases and default case
     }
   }
 
@@ -372,7 +389,7 @@ public class MarsGame{
       case "Greenery":
         if (plyr.money >= 23 - reduction){
           plyr.moneyChange(-23 + reduction);
-          putGreenery(id); !!!!!!!!!
+          putGreenery(id); //FIX!!!!
           return true;
         }else{
           System.out.println("Not enough money!");
@@ -406,7 +423,7 @@ public class MarsGame{
       if (type.equals("Events")) plyr.playedEvents.add(card);
       if (type.equals("Permanents")) plyr.playedPermanents.add(card);
       if (type.equals("Projects")) plyr.playedProjects.add(card);
-      effect!
+      //CARD EFFECT!!!
     }else{
       return false;
     }
@@ -414,7 +431,7 @@ public class MarsGame{
 
   //Status: Complete
   public boolean fundAward(String awardName, int id){
-    MarsPlayer plyr = player.get(id);
+    MarsPlayer plyr = players.get(id);
     if (numAward >= 3){
       System.out.println("No more awards.");
       return false;
@@ -440,7 +457,7 @@ public class MarsGame{
 
   //Status: Complete
   public boolean claimMilestone(String name, int id){
-    MarsPlayer plyr = player.get(id);
+    MarsPlayer plyr = players.get(id);
     if (numMilestone >= 3){
       System.out.println("No more milestones.");
       return false;
