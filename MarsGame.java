@@ -176,6 +176,19 @@ public class MarsGame{
     //Put greeneries
 
     //awards
+    endAward();
+
+    //card points
+    for (MarsPlayer plyr : players){
+      for (MarsCard card: plyr.playedEvents){
+        if (card.constantVp == false){
+          countPoints
+        }
+      }
+    }
+  }
+
+  private void endAward(){
     if (awards.get("Miner")){
       int[] m = new int[numPlayers];
       for (int i = 0; i < numPlayers; i ++){
@@ -205,7 +218,11 @@ public class MarsGame{
       countAward(s);
     }
     if (awards.get("Landlord")){
-
+      int[] l = new int[numPlayers];
+      for (int i = 0; i < board.length; i ++){
+        if (board[i][1] != -1) l[board[i][1]] ++;
+      }
+      countAward(l);
     }
   }
 
@@ -385,8 +402,11 @@ public class MarsGame{
       int reduction = 0;
       int cost = card.cost - reduction;
       plyr.moneyChange(-cost);
-      effect!;
-      discardPile.add(card);
+      String type = card.type;
+      if (type.equals("Events")) plyr.playedEvents.add(card);
+      if (type.equals("Permanents")) plyr.playedPermanents.add(card);
+      if (type.equals("Projects")) plyr.playedProjects.add(card);
+      effect!
     }else{
       return false;
     }
