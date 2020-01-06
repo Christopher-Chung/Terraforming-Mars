@@ -33,13 +33,15 @@ public class MarsPlayer{
   Vector<MarsCard> playedEvents;
   Vector<MarsCard> playedPermanents;
   Vector<MarsCard> playedProjects;
+  Vector<MarsCard> tempDraftHand;
+  Vector<MarsCard> draftHand;
 
   public MarsPlayer(int sequence, String corperation){
     id = sequence;
     corp = corperation;
   }
 
-  private void generationProduce(){
+  protected void generationProduce(){
     money += (rating + moneyProduction);
     heat += (energy + heatProduction);
     energy = energyProduction;
@@ -48,12 +50,12 @@ public class MarsPlayer{
     titanium += titaniumProduction;
   }
 
-  private MarsPlayer moneyChange(int change){
+  protected MarsPlayer moneyChange(int change){
     money += change;
     return this;
   }
 
-  private void ratingIncrement(){
+  protected void ratingIncrement(){
     rating ++;
   }
 
