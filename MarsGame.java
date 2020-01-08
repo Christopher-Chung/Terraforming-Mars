@@ -3,7 +3,7 @@ import java.util.*;
 public class MarsGame{
 
   protected int numPlayers;
-  protected int[][] board; //board[location][id]
+  MarsBoard board;
   protected int temperature;
   protected int generation;
   protected int oxygen;
@@ -13,11 +13,11 @@ public class MarsGame{
   final int maxOxygen = 14;
   final int maxOcean = 9;
   MarsDeck deck;
-  Queue<MarsCard> drawPile;
+  LinkedList<MarsCard> drawPile;
   Vector<MarsCard> discardPile;
   Vector<MarsPlayer> players;
 
-  HashMap<String,boolean> awards;
+  HashMap<String,Boolean> awards;
   HashMap<String,Integer> milestones;
   int[] awardCost;
   int numAward;
@@ -25,7 +25,7 @@ public class MarsGame{
 
   public MarsGame(int playerNumber){
     numPlayers = playerNumber;
-    board = new int[100][2]; //NUMBER OF SPACES!! FIX
+    board = new MarsBoard();
     temperature = -24;
     generation = 1;
     oxygen = 0;
@@ -38,7 +38,7 @@ public class MarsGame{
     milestones.put("Mayor",0);
     milestones.put("Gardner",0);
     milestones.put("Planner",0);
-    awards = new HashMap<String,boolean>();
+    awards = new HashMap<String,Boolean>();
     awards.put("Landlord",false);
     awards.put("Banker",false);
     awards.put("Scientist",false);
@@ -47,7 +47,7 @@ public class MarsGame{
     players = new Vector<MarsPlayer>();
     awardCost = new int[]{8,14,20};
     deck = new MarsDeck(true);
-    drawPile = new ConcurrentLinkedQueue<MarsCard>();
+    drawPile = new LinkedList<MarsCard>();
     MarsDeck.initial(deck,drawPile);
     discardPile = new Vector<MarsCard>();
   }
@@ -119,7 +119,7 @@ public class MarsGame{
       case "Raise temperature":
         if (plyr.heat >= 8){
           plyr.heat -= 8;
-          putGreenery(); ///
+          tempIncrease(plyr);
         }else{
           System.out.println("Not enough heat.");
         }
@@ -129,14 +129,14 @@ public class MarsGame{
         if (check){
           if (plyr.plant >= 7){
             plyr.plant -= 7;
-            putGreenery();
+            putGreenery(id);
           }else{
             System.out.println("Not enough plants.");
           }
         }else{
           if (plyr.plant >= 8){
             plyr.plant -= 8;
-            putGreenery();
+            putGreenery(id);
           }else{
             System.out.println("Not enough plants.");
           }
@@ -220,8 +220,8 @@ public class MarsGame{
     }
     if (awards.get("Landlord")){
       int[] l = new int[numPlayers];
-      for (int i = 0; i < board.length; i ++){
-        if (board[i][1] != -1) l[board[i][1]] ++;
+      for (Boardspace space : board.getCoordinates.values()){
+        if (space.item != 0) l[space.id] ++;
       }
       countAward(l);
     }
@@ -296,6 +296,12 @@ public class MarsGame{
     if (temperature < maxTemp){
       temperature += 2;
       plyr.ratingIncrement();
+      if (temperature == -20 || temperature == -24){
+        plyr.heatProduction ++;
+      }
+      if (temperature == 0 && oceans < maxOcean){
+        putOcean(plyr.id);
+      }
     }
   }
 
@@ -303,28 +309,52 @@ public class MarsGame{
     if (oxygen < maxOxygen){
       oxygen ++;
       plyr.ratingIncrement();
+      if (oxygen == 8){
+        tempIncrease(plyr);
+      }
     }
   }
 
-  private void putGreenery(int id, int location){
-
+  private void putGreenery(int id){
+    putOnBoard(id,1);
+    oxygenIncrease(players.get(id));
   }
 
-  private void putCity(MarsPlayer plyr){
-
+  private void putCity(int id){
+    putOnBoard(id,3);
   }
 
-  private void putOnBoard(int id, String item){
-    int location = -1;
-    while (location < 0 || board[location][0] != 0){
-      System.out.println("Choose location: ");
-      location = Scanner.nextInt();
+  private void putOcean(int id){
+    putOnBoard(id,2);
+    players.get(id).ratingIncrement();
+    oceans ++;
+  }
+
+  private void putOnBoard(int id, int itemNumber){
+    int locX = 5;
+    int locY = 5;
+    Scanner scanner = new Scanner(System.in);
+    while (board.checkLocation(locX,locY,itemNumber,id) == false){
+      System.out.println("Choose location (x): (Press 9 to quit)");
+      locX = scanner.nextInt();
+      if (locX == 9) return;
+      System.out.println("Choose location (y): ");
+      locY = scanner.nextInt();
     }
-    board[location][1] = id;
+    int location = 100 * locX + locY;
+    board.getCoordinates.replace(location,board.getCoordinates.get(location).modify(id,itemNumber));
+    MarsPlayer plyr = players.get(id);
+    int[] placementRewards = board.getCoordinates.get(location).bonus;
+    plyr.plant += placementRewards[0];
+    plyr.steel += placementRewards[2];
+    plyr.titanium += placementRewards[3];
+    for (int i = 0; i < placementRewards[1]; i ++){
+      plyr.addCard(drawCard());
+    }
   }
 
   //Takes a legal card and check global requirements.
-  private boolean checkReqs(String cardName){
+  private boolean checkReqs(String cardName, MarsPlayer plyr){
     MarsCard card = deck.deck.get(cardName);
     switch (card.cardReqs){
       case 0:
@@ -348,6 +378,8 @@ public class MarsGame{
           return oceans <= -card.oceanReqs;
         }
       //More cases and default case
+      default:
+        return false;
     }
   }
 
@@ -377,10 +409,14 @@ public class MarsGame{
           System.out.println("Not enough money!");
           return false;
         }
-      case "Aquafer": //Finish this
-        if (plyr.money >= 14 - reduction){
-          plyr.moneyChange(-14 + reduction);
-          tempIncrease(plyr);
+      case "Aquifer":
+        if (oceans >= maxOcean){
+          System.out.println("No more oceans.");
+          return false;
+        }
+        if (plyr.money >= 18 - reduction){
+          plyr.moneyChange(-18 + reduction);
+          putOcean(id);
           return true;
         }else{
           System.out.println("Not enough money!");
@@ -398,7 +434,7 @@ public class MarsGame{
       case "City":
         if (plyr.money >= 25 - reduction){
           plyr.moneyChange(-25 + reduction);
-          putCity(plyr);
+          putCity(id);
           plyr.moneyProduction ++;
           return true;
         }else{
@@ -413,7 +449,7 @@ public class MarsGame{
 
   public boolean playCard(String cardName, int id){
     MarsPlayer plyr = players.get(id);
-    if (deck.searchCard(cardName) != null && plyr.hand.contains(cardName)){
+    if (deck.searchCard(cardName) != null && plyr.hand.contains(cardName) && checkReqs(cardName,plyr)){
       MarsCard card = deck.searchCard(cardName);
       //Check for money reduction
       int reduction = 0;
@@ -424,7 +460,9 @@ public class MarsGame{
       if (type.equals("Permanents")) plyr.playedPermanents.add(card);
       if (type.equals("Projects")) plyr.playedProjects.add(card);
       //CARD EFFECT!!!
+      return true;
     }else{
+      System.out.println("Play card: failed");
       return false;
     }
   }
@@ -507,6 +545,10 @@ public class MarsGame{
       System.out.println("Not enough money!");
       return false;
     }
+  }
+
+  public static void main(String args[]){
+    
   }
 
 }
