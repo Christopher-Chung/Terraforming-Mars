@@ -1,4 +1,4 @@
-import java.util.HashMap;
+import java.util.*;
 
 public class MarsDeck{
   protected HashMap<String,MarsCard> deck;
@@ -19,11 +19,12 @@ public class MarsDeck{
     }
   }
 
-  public static ConcurrentLinkedQueue<MarsCard> initial(MarsDeck allCard,ConcurrentLinkedQueue<MarsCard> queue){
+
+  //Shuffles initial pile
+  public static void initial(MarsDeck allCard,LinkedList<MarsCard> queue){
     Random random = new Random();
-    Set set = allCard.keySet();
     Vector<MarsCard> temp = new Vector<MarsCard>(250);
-    for (MarsCard card : set){
+    for (MarsCard card : allCard.deck.values()){
       temp.add(card);
     }
     int size = temp.size();
@@ -33,7 +34,6 @@ public class MarsDeck{
       temp.remove(card);
       queue.offer(card);
     }
-    return queue;
   }
 
   public void addAll(){
