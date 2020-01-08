@@ -172,6 +172,8 @@ public class MarsGame{
     //milestone already counted for
     for (MarsPlayer plyr : players){
       plyr.generationProduce();
+      //Add terraforming rating
+      plyr.vp += plyr.rating;
     }
     int id = generation % numPlayers;
     //Put greeneries
@@ -181,12 +183,35 @@ public class MarsGame{
 
     //card points
     for (MarsPlayer plyr : players){
-      for (MarsCard card: plyr.playedEvents){
-        if (card.constantVp == false){
-          //Countpoints
+      for (MarsCard card: plyr.playedEvents) plyr.vp += card.vp;
+      for (MarsCard card: plyr.playedPermanents){
+        if (card.constantVp){
+          plyr.vp += card.vp;
+        }else{
+
+        }
+      }
+      for (MarsCard card: plyr.playedProjects){
+        if (card.constantVp){
+          plyr.vp += card.vp;
+        }else{
+
         }
       }
     }
+
+    //board points
+    for (MarsPlayer plyr : players){
+      //Greenery points
+      for (Boardspace space : board.getCoordinates.values()){
+        if (space.item == 1 && space.id == plyr.id) plyr.vp ++;
+      }
+      //Greeneries around cities
+      for (Boardspace space : board.getCoordinates.values()){
+        if (space.item == 3 && space.id == plyr.id) plyr.vp += board.adjacentGreeneries(space.i,space.j);
+      }
+    }
+
   }
 
   private void endAward(){
@@ -351,6 +376,7 @@ public class MarsGame{
     for (int i = 0; i < placementRewards[1]; i ++){
       plyr.addCard(drawCard());
     }
+    plyr.money += 2 * board.adjacentOceans(locX,locY);
   }
 
   //Takes a legal card and check global requirements.
@@ -548,7 +574,7 @@ public class MarsGame{
   }
 
   public static void main(String args[]){
-    
+
   }
 
 }
